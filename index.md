@@ -1,42 +1,43 @@
 # grok-build 代码 Wiki
 
-> xAI 的终端 AI 编程助手——在命令行里读懂代码、修改文件、跑命令、搜网络，像跟程序员同事聊天一样自然。
+> SpaceXAI 出品的终端 AI 编程助手——像个懂代码的同事，在命令行里陪你写代码、查文件、跑命令。
 
-**📅 生成时间：2026/7/17 14:34:45** · 共 12 页 / 43 张图 · 基于 [github.com/xai-org/grok-build](https://github.com/xai-org/grok-build)
+**📅 生成时间：2026/7/17 15:26:34** · 共 13 页 / 33 张图 · 基于 [github.com/xai-org/grok-build](https://github.com/xai-org/grok-build)
 
 ## 📖 目录
 
 | # | 页面 | 类型 | 这一页讲什么 |
 |---|------|------|--------------|
-| 1 | [项目总览](01-overview.md) | 总览 | Grok Build 是什么、解决什么问题、用了哪些技术、仓库怎么划分区域。读完能知道整个项目的大致轮廓和每个文件夹是干嘛的。 |
-| 2 | [整体架构](02-architecture.md) | 架构 | 区域之间怎么分层、数据和控制怎么流转。从用户按键盘到 AI 回复出现的完整通路。读完能画出架构图。 |
-| 3 | [快速上手](03-getting-started-quickstart.md) | 上手 | 怎么安装、构建、第一次运行 Grok Build。跟着做一遍就能在终端里跟 AI 聊起来。 |
-| 4 | [核心流程：从用户输入到 AI 回复](04-user-input-to-ai-response-flow.md) | 核心流程 | 按下回车后发生了什么：TUI 捕捉按键 -> 事件循环 -> 消息组装 -> 采样器请求模型 -> 流式响应 -> 渲染回屏幕。一条完整的端到端链路。 |
-| 5 | [工具执行引擎（模型如何操作文件系统）](05-tool-execution-engine.md) | 核心流程 | AI 说“修改这个文件”时背后发生的事：工具协议 -> 路由查找 -> 权限审批 -> 文件 I/O -> 结果返回。读完能理解模型怎么像人一样操作代码。 |
-| 6 | [Agent 生命周期与多 Agent 协同（最难的概念）](06-agent-lifecycle-and-multi-agent-coordination.md) | 概念故事 | Agent 不是简单的“问一句答一句”——它有复杂的启动、会话管理、子任务拆分、多代理协调。用生活场景（“搬家团队”）讲清楚 Leader Agent、SubAgent、会话 Fork、生命周期钩子这些绕口的概念。 |
-| 7 | [工作区管理（Hub、文件系统、权限、会话）](07-workspace-management.md) | 模块 | Grok Build 怎么发现你的项目、读文件、跟踪 Git 状态、管理会话权限。看完能理解 `workspace` 这个模块的每一个关键组件。 |
-| 8 | [遥测与可观测性：事件、脱敏、远程上报](08-telemetry-and-observability.md) | 模块 | Grok Build 怎么记录自己的行为（工具调用、会话延迟）、怎么脱敏敏感信息、怎么把数据发给 Mixpanel/Sentry/OTLP。读完能理解整个监控体系。 |
-| 9 | [聊天状态管理与长期记忆](09-chat-state-and-memory.md) | 模块 | Grok 怎么记住你之前的对话、怎么压缩长上下文、怎么向量化记忆并搜索。读完能理解 `xai-chat-state` 和 `xai-grok-memory` 两个模块。 |
-| 10 | [代码索引与理解（Codebase Graph）](10-codebase-graph-and-code-understanding.md) | 模块 | Grok 怎么把你的代码仓库变成一张可以查询的关系图：解析 AST、提取符号、建立引用关系、支持跳转。读完能理解代码级智能的背景原理。 |
-| 11 | [Mermaid 图表渲染（第三方库解析与 SVG 输出）](11-third-party-mermaid-rendering.md) | 模块 | 用户告诉 AI “画个时序图”，背后怎么把 Mermaid 语法解析成 SVG。读完能理解 `third_party/mermaid-to-svg` 的解析-布局-渲染管线。 |
-| 12 | [扩展机制：MCP 服务器、钩子、插件](12-mcp-hooks-and-plugins.md) | 上手 | 怎么给 Grok Build 加新能力：连外部模型、注册自定义钩子事件响应、开发第三方插件。读完能上手集成自己的工具。 |
+| 1 | [项目总览](01-overview.md) | 总览 | 一句话介绍 grok-build 是什么、能干什么、技术栈是什么，帮新人快速建立全局认知。 |
+| 2 | [整体架构：区域之间怎么合作](02-architecture.md) | 架构 | 用一张大图说清各区域之间的依赖和调用关系，让你看懂这个大家伙怎么拼起来的。 |
+| 3 | [5 分钟快速上手](03-getting-started.md) | 上手 | 从安装到第一次跟 Grok 对话，让你最快跑起来、看到效果。 |
+| 4 | [用户命令与功能参考](04-user-reference.md) | 参考 | 所有斜杠命令、快捷键、CLI 参数、配置项的完整清单，遇到不懂的直接查。 |
+| 5 | [工具系统：AI 的"工具箱"](05-tool-system.md) | 模块 | Grok 能调用的所有工具（读写文件、执行命令、搜代码、抓网页……）是怎么注册、怎么路由、怎么执行的。 |
+| 6 | [工作区与文件系统](06-workspace-filesystem.md) | 模块 | Grok 怎么"看到"你的代码？——虚拟文件系统、权限引擎、git 集成、checkpoint，这一页全讲清。 |
+| 7 | [聊天状态与智能体生命周期](07-chat-state-and-agent.md) | 概念故事 | 用"小工人"的比喻讲透 ChatStateActor 和 Agent 是怎么管理对话、压缩记忆、处理命令的。 |
+| 8 | [采样引擎与遥测系统](08-sampler-and-telemetry.md) | 模块 | AI 的"大脑"怎么发起推理请求、处理流式响应、自动重试？遥测系统又怎么收集数据上报？ |
+| 9 | [Markdown 流式渲染](09-markdown-rendering.md) | 模块 | Grok 的聊天窗口里那些彩色的代码块、表格、链接、Mermaid 图是怎么一句一句画出来的。 |
+| 10 | [快速工作树与代码图](10-worktree-and-codebase-graph.md) | 模块 | Grok 怎么飞快地 clone 出工作树的副本？怎么把所有代码的关系整理成一张图供查询？ |
+| 11 | [钩子、MCP 协议与沙箱](11-hooks-mcp-and-sandbox.md) | 模块 | Grok 怎么允许你"拦截"事件、接入外部服务、安全隔离危险命令。 |
+| 12 | [Pager 终端 UI 与端到端测试](12-pager-and-e2e-testing.md) | 核心流程 | 跟着一次"用户按方向键"的完整路径走一遍：从终端输入→按键映射→事件循环→渲染→屏幕输出，看最终效果。 |
+| 13 | [通用基础设施：断路器、工具协议、压缩、记忆](13-common-infrastructure.md) | 模块 | 那些每个模块都在偷偷用的"螺丝刀"：断路器防止雪崩、工具协议负责通信、压缩省 token、记忆让 AI 记住你。 |
 
 ## 🗂 仓库分区速览
 
 | 区域 | 重要度 | 一句话说明 |
 |------|--------|-----------|
-| `xai-grok-pager/src` | ★★★★★ | 这个区域是 xAI Grok 聊天机器人的终端界面（TUI）应用，负责在命令行里展示对话、处理用户输入、管理会话和子代理… |
-| `xai-grok-shell/src` | ★★★★★ | 这个区域是 xAI 那个 Grok 聊天助手（可以帮你写代码、回答问题）的壳（Shell）——它管理用户登录、聊天会话、… |
-| `codegen/xai-grok-tools` | ★★★★★ | 这个区域是 xAI 的 Grok 模型在执行代码生成任务时用到的一套工具箱——它提供了读文件、写文件、搜索、运行命令、编… |
-| `crates/common` | ★★★★★ | 这个区域是 grok-build 项目的"公共工具箱"和"协议层"，里面放了一堆各个核心模块都会用到的通用库，比如断路器… |
-| `codegen/xai-grok-workspace` | ★★★★★ | 这是 xai-grok 的本地工作区核心库，负责管理你的项目文件夹：读文件、查 Git 状态、索引代码、运行命令行、决定… |
-| `codegen/xai-grok-pager-render` | ★★★★★ | 这个区域是 Grok 终端的渲染引擎——负责把 Markdown、代码、图片、视频、表格等内容，在终端里画出来，同时处理… |
-| `codegen/xai-grok-workspace-types` | ★★★★★ | 这个区域定义了 xAI 工作区 API 的通信协议类型——也就是客户端和服务器之间通过网络传递的请求、响应块、事件的格式… |
-| `codegen/xai-codebase-graph` | ★★★★★ | 这个区域负责把代码仓库扫描成一张「代码关系图」—— 也就是分析出每个文件有哪些函数、变量、类型，以及它们之间的引用关系，… |
-| `third_party` | ★★★★☆ | 这个区域是项目”照搬“进来的第三方库源码，放在项目里是为了让渲染流程图、图表这些功能完全可控，避免依赖的包突然从网上消失… |
-| `codegen/xai-grok-telemetry` | ★★★★☆ | 这是 Grok Build 的监控诊所——它负责收集代码生成过程中各种事件（比如工具调用、会话延迟、错误崩溃），然后一股… |
-| `codegen/xai-grok-markdown` | ★★★★☆ | 这是一个能在终端里实时渲染 Markdown 文本的库，专门为了展示 AI 生成的流式内容而设计。 |
-| `codegen/xai-grok-agent` | ★★★★☆ | 把 Agent（说白了就是 AI 助手的“本体”）从一堆混乱的配置、工具、提示词里组装成一个能直接跑的“打包件”。 |
+| `xai-grok-pager/src` | ★★★★★ | 这是 Xai Grok 聊天助手的终端 UI 分页器，让你能在终端里像用聊天 App 一样跟 Grok 对话、看它逐步生… |
+| `xai-grok-shell/src` | ★★★★★ | 这是我的命令行客户端（Agent Shell）的核心代码，负责管理用户登录、AI 聊天、文件操作、插件和扩展命令——相当… |
+| `codegen/xai-grok-tools` | ★★★★★ | 这是 Grok 的"工具箱"，里面装了一大堆 AI 能调用的工具，比如读写文件、搜索代码、执行命令、查网页等，让 Gro… |
+| `codegen/xai-grok-workspace` | ★★★★★ | 这是 xai-grok 的本地工作区核心库，负责管理代码仓库（VSCode 工程/任意目录）的虚拟文件系统、Git/JJ… |
+| `xai-grok-pager/tests` | ★★★★☆ | 这是 xai-grok-pager 的端到端（e2e）测试集，模拟真实用户在终端里敲按键、看界面、收响应，确保每个交互场… |
+| `crates/common` | ★★★★☆ | 这个区域是 Grok 项目通用的基础设施工具箱，包含了断路器、工具协议、任务调度、日志追踪、测试辅助等乱七八糟但每个服务… |
+| `codegen/xai-grok-pager-render` | ★★★★☆ | 这个区域是 Grok 聊天对话界面（称为 Pager）的渲染和终端控制核心——说白了就是控制对话窗口里文字、代码块、图片… |
+| `codegen/xai-grok-workspace-types` | ★★★★☆ | 这个包定义了 xAI Grok 工作区 API 的"电线格式"——客户端和服务器之间来回传输的所有消息类型（请求、数据块… |
+| `codegen/xai-grok-markdown` | ★★★★☆ | 一个流式 Markdown 渲染器，专门为终端 UI（如聊天界面）设计——你把 Markdown 文本丢进去，它边解析边… |
+| `codegen/xai-grok-pager-pty-harness` | ★★★★☆ | 这是一个专门用来模拟终端自动化测试和性能基准的工具箱，能自动打开伪终端（PTY）、往里塞文本、模拟用户按键或滚动，然后观… |
+| `codegen/xai-grok-agent` | ★★★★☆ | 这个区域是Agent的"制造工厂"——把散落在各处的工具、提示词、权限规则、重试策略打包成一个标准化的Agent对象，让… |
+| `codegen/xai-fast-worktree` | ★★★★☆ | 把 Git 仓库的代码复制一份出来，用一种叫「写时复制」（CoW）的黑科技——复制的时候不真的拷贝数据，等有人改文件才实… |
 
 > 另有 18 个次要区域（测试、文档、构建脚本等），正文模块页会按需涉及。
 
