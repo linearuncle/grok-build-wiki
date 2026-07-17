@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>grok-build 代码解读 Wiki</title>
+	<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+	<style>
+		.mermaid { text-align: center; margin: 1em 0; }
+	</style>
+</head>
+<body>
+	<div id="app">加载中…</div>
+	<script>
+		window.$docsify = {
+			name: "grok-build 代码解读",
+			repo: "https://github.com/xai-org/grok-build",
+			homepage: "index.md",
+			loadSidebar: true,
+			subMaxLevel: 2,
+			auto2top: true,
+			markdown: {
+				renderer: {
+					code(code, lang) {
+						if (lang === "mermaid") {
+							return `<div class="mermaid">${code}</div>`;
+						}
+						return this.origin.code(code, lang);
+					},
+				},
+			},
+			plugins: [
+				function (hook) {
+					hook.doneEach(function () {
+						mermaid.run({ querySelector: ".mermaid" });
+					});
+				},
+			],
+		};
+	</script>
+	<script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+	<script src="//cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+	<script>
+		mermaid.initialize({ startOnLoad: false, theme: "default" });
+	</script>
+</body>
+</html>
