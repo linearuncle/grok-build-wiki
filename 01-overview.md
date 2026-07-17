@@ -2,107 +2,201 @@
 
 # 项目总览
 
-## Grok Build 是什么？
+## 什么是 Grok Build？
 
-**Grok Build** 是 SpaceXAI 出品的一个终端里的 AI 编程助手。你打开它，就像在命令行里开了个能跟你聊天的窗口——它看得懂你的代码，能帮你改文件、跑命令、查资料、搜网页，还能长时间挂着帮你干活。
+**Grok Build** 是 xAI 出品的终端 AI 编程助手。你看它的全称——`grok` 命令行工具——做的事情就是：在终端里读懂你的代码库、帮你改文件、跑命令、搜网络，还能管理长时间运行的任务。
 
-你可以把它当聊天窗口用（交互模式），也可以塞到脚本或 CI 流水线里让它自己跑（headless 模式），或者通过 Agent Client Protocol（ACP，一个让编辑器跟 AI 通信的协议）嵌到 VS Code 这类编辑器里。
+它有三种用法：
 
-> 这玩意儿是用 **Rust** 写的，仓库里几千个 `.rs` 文件，主要依赖 `tokio` 异步运行时搞定并发。
-
-## 一句话说清各个零件
-
-整个仓库分成几大块，每块管一个事：
+- **交互模式（TUI）**——全屏终端界面，你直接跟 AI 聊天，就像在命令行里开了一个 ChatGPT。
+- **无头模式（Headless）**——适合脚本和 CI 流程，不需要终端界面，直接通过标准输入/输出跟 AI 交互。
+- **嵌入模式**——通过 ACP（Agent Client Protocol，一个让其他程序连接智能体的网络协议）嵌入到编辑器里，作为 IDE 插件工作。
 
 ```mermaid
-flowchart TB
-    P["xai-grok-pager-bin<br/>二进制入口（编译出 grok 命令）"]
-    P --> PAGER["xai-grok-pager<br/>TUI 界面引擎<br/>聊天窗口、按键处理、渲染"]
-    PAGER --> RENDER["xai-grok-pager-render<br/>终端渲染引擎<br/>Markdown→高亮→绘图"]
-    PAGER --> SHELL["xai-grok-shell<br/>Agent 运行时<br/>AI 对话、扩展、认证"]
-
-    SHELL --> TOOLS["xai-grok-tools<br/>工具箱<br/>读写文件、跑命令、搜代码"]
-    SHELL --> WORKSPACE["xai-grok-workspace<br/>工作区服务器<br/>文件系统、Git、权限"]
-    SHELL --> AGENT["xai-grok-agent<br/>Agent 定义与组装<br/>Markdown→可运行对象"]
-
-    WORKSPACE --> COMMON["crates/common<br/>公共基础设施<br/>熔断器、协议、压缩"]
-    TOOLS --> COMMON
-    PAGER --> COMMON
-
-    COMMON --> THIRD["third_party<br/>第三方依赖<br/>Mermaid 渲染栈"]
+flowchart TD
+    用户 -->|启动命令| A["grok CLI 界面"]
+    A -->|选择模式| B["TUI 模式: 敲键盘聊天"]
+    A -->|选择模式| C["无头模式: 标准输入/输出"]
+    A -->|选择模式| D["ACP 嵌入: 通过 WebSocket 被编辑器调用"]
+    B --> E["处理代码库"]
+    C --> E
+    D --> E
+    E --> F["读文件 | 改代码 | 跑命令 | 搜网络"]
+    F -->|返回结果| G["AI 回答/界面刷新"]
+    
+    style A fill:#4a90d9,color:#fff
+    style E fill:#e67e22,color:#fff
+    style G fill:#27ae60,color:#fff
 ```
 
-**每个 crate 的具体用处（按上图从左到右）：**
+## 仓库是怎么划分的？
 
-| crate（路径） | 它干嘛的 |
-|------|----------|
-| `xai-grok-pager-bin`（`crates/codegen/xai-grok-pager-bin/`） | 整个程序的入口——编译出来就是 `grok` 命令。它只是把其他 crate 拼起来。 |
-| `xai-grok-pager`（`crates/codegen/xai-grok-pager/`） | 终端里的聊天界面。管着用户怎么输入、 AI 怎么回复、屏幕怎么画。它的 `event_loop.rs` 是所有按键的调度中心。 |
-| `xai-grok-pager-render`（`crates/codegen/xai-grok-pager-render/`） | 渲染引擎。把 Markdown 文本变成终端里五彩斑斓的代码高亮、图片占位符、 Mermaid 图。 |
-| `xai-grok-shell`（`crates/codegen/xai-grok-shell/`） | AI 对话的核心运行时。Agent（小助手）在这里加载配置、认证、扩展，它决定怎么跟 AI 后端通信、怎么调用工具。 |
-| `xai-grok-tools`（`crates/codegen/xai-grok-tools/`） | AI 的「手和眼睛」——里面几十个小工具，每个都能干一件事：读文件、写文件、跑 shell 命令、搜代码、查网页。AI 通过 JSON 指令调用它们。 |
-| `xai-grok-workspace`（`crates/codegen/xai-grok-workspace/`） | 工作区大管家。管你本地文件系统、 Git 操作、权限控制、会话管理。它是一个长期运行的服务，通过 WebSocket 跟中心 Hub 通信。 |
-| `xai-grok-agent`（`crates/codegen/xai-grok-agent/`） | Agent 的「生产线」。从 Markdown 定义文件读配置，组装提示词、绑定工具、挂上生命周期钩子，最后造出一个能干活的小助手。 |
-| `crates/common/` 下的 | 公共零件箱。电路熔断器（保护下游不被压垮）、工具通信协议（二进制帧格式）、聊天内容压缩（省 Token 钱）、追踪和测试工具。所有上层 crate 都依赖它们。 |
-| `third_party/` | 仓库里直接塞进来的第三方代码——一整套 Mermaid 图渲染栈（解析器、布局引擎、 SVG 渲染器）。因为要在终端里显示 Mermaid 图，干脆把上游代码复制过来了。 |
+整个项目是 Rust 工作空间（`Cargo.toml` 里定义了所有成员 crate），代码集中在 `crates/` 下。我把它们按功能分成几大块，帮你快速摸清：
 
-## 一次完整的对话大概是这样的
+### 🎮 终端层（就是你能看见的部分）
 
-为了让你感觉一下这些零件怎么配合，下面画了一张时序图，展示「用户按回车发送问题 → AI 回复显示在终端」的完整流程：
+| 路径 | 干啥的 |
+|------|--------|
+| `crates/codegen/xai-grok-pager` | TUI 主应用——捕捉按键、管理对话、渲染界面 |
+| `crates/codegen/xai-grok-pager-render` | 终端渲染引擎——把 Markdown、代码、图片画到终端里 |
+| `crates/codegen/xai-grok-pager-bin` | 最终的可执行文件 `xai-grok-pager`（发布时改名为 `grok`） |
+| `crates/codegen/xai-grok-markdown` | Markdown 实时渲染库——把 AI 输出的 Markdown 转成终端颜色和格式 |
+
+看 `crates/codegen/xai-grok-pager/src/lib.rs`，里面暴露了 `app`、`input`、`views` 这些模块——这整个 crate 就是你的"终端聊天窗口"。
+
+### 🧠 Agent 层（AI 的大脑）
+
+| 路径 | 干啥的 |
+|------|--------|
+| `crates/codegen/xai-grok-shell` | Agent 运行时——管理会话生命周期、认证、扩展能力 |
+| `crates/codegen/xai-grok-shell-base` | Agent 的基础工具和环境变量 |
+| `crates/codegen/xai-grok-sampler` | 采样器——负责跟 AI 模型通信，决定"模型下一步说什么" |
+| `crates/codegen/xai-grok-agent` | 纯 AI 逻辑层——实现 Agent 内部的行为模式 |
+| `crates/codegen/xai-agent-lifecycle` | Agent 生命周期钩子（启动、暂停、恢复、结束） |
+
+入口在 `crates/codegen/xai-grok-shell/src/lib.rs`——这里面定义了 `agent`、`session`、`extensions`、`auth` 等模块，是整个 AI 能力的"总调度间"。
+
+### 🔧 工具层（让 AI 能操作你的文件系统）
+
+| 路径 | 干啥的 |
+|------|--------|
+| `crates/codegen/xai-grok-tools` | 30+ 种原子工具——读文件、写文件、搜索、跑命令、Git 操作 |
+| `crates/codegen/xai-grok-tools-api` | 工具的 API 定义 |
+| `crates/codegen/xai-hunk-tracker` | "Hunk"追踪器——记录代码片段的更改历史 |
+
+工具层在 `crates/codegen/xai-grok-tools/src/lib.rs` 里通过 `bridge` 模块注册所有工具，模型通过协议调用它们。
+
+### 🏗️ 工作区层（本地项目管理）
+
+| 路径 | 干啥的 |
+|------|--------|
+| `crates/codegen/xai-grok-workspace` | 工作区核心——发现项目、读文件、权限审批、会话管理 |
+| `crates/codegen/xai-grok-workspace-client` | 工作区客户端——远程连接工作区的封装 |
+| `crates/codegen/xai-grok-workspace-types` | 工作区事件和类型定义 |
+| `crates/codegen/xai-codebase-graph` | 代码索引——把代码仓库变成可查询的关系图 |
+| `crates/codegen/xai-fast-worktree` | 快速工作树——高效文件变化检测 |
+
+看 `crates/codegen/xai-grok-workspace/src/lib.rs`，里面有一个 `hub` 模块——它就是"管家"，负责扫描文件夹、拉起文件系统、管理权限。
+
+### 📦 公共库（被多个模块共享的基础设施）
+
+这些在 `crates/common/` 下：
+
+| 路径 | 干啥的 |
+|------|--------|
+| `xai-tool-protocol` | 工具通信协议（类似 JSON-RPC） |
+| `xai-tool-runtime` | 工具运行时——路由、调度、执行 |
+| `xai-tool-types` | 工具的数据类型 |
+| `xai-circuit-breaker` | 断路器——防止请求雪崩 |
+| `xai-computer-hub-core/sdk` | 远程计算资源抽象层 |
+| `xai-grok-compaction` | 对话压缩——把长对话缩成摘要 |
+| `xai-tracing` | 统一日志和链路追踪 |
+
+比如 `crates/common/xai-tool-protocol/src/lib.rs` 里定义了 `ToolCallParams`、`ToolCallResult` 这些帧结构——所有工具调用都走这套协议。
+
+### 🎨 第三方库
+
+`third_party/` 下放了直接搬进项目的源码，主要是 Mermaid 图表渲染：
+
+| 路径 | 干啥的 |
+|------|--------|
+| `mermaid-to-svg` | 解析 Mermaid 语法并画出 SVG |
+| `dagre_rust` | 布局算法——算每个节点该摆在哪 |
+| `graphlib_rust` | 图结构库 |
+
+### 🌱 其他辅助模块
+
+| 路径 | 干啥的 |
+|------|--------|
+| `crates/codegen/xai-grok-config` | 配置管理——用户设置 |
+| `crates/codegen/xai-grok-telemetry` | 遥测——记录行为、脱敏、上报 |
+| `crates/codegen/xai-chat-state` | 聊天状态管理 |
+| `crates/codegen/xai-grok-memory` | 长期记忆——向量化历史对话 |
+| `crates/codegen/xai-grok-hooks` | 钩子系统——给外部事件绑定自定义行为 |
+| `crates/codegen/xai-grok-mcp` | MCP（Model Context Protocol）服务器集成 |
+| `crates/codegen/xai-grok-voice` | 语音支持 |
+| `crates/codegen/xai-mixpanel` | Mixpanel 事件分析 |
+
+### 整个架构的数据流长这样
 
 ```mermaid
 sequenceDiagram
-    participant User as 用户
-    participant Pager as "xai-grok-pager<br/>（界面引擎）"
-    participant Render as "xai-grok-pager-render<br/>（渲染引擎）"
-    participant Shell as "xai-grok-shell<br/>（Agent 运行时）"
-    participant Tools as "xai-grok-tools<br/>（工具箱）"
-    participant Workspace as "xai-grok-workspace<br/>（工作区服务器）"
-
-    User->>Pager: 按 Enter
-    alt 需要 AI 处理
-        Pager->>Shell: 发消息给 AI
-        Shell->>Workspace: 读当前文件（上下文）
-        Workspace-->>Shell: 返回文件内容
-        Shell->>Tools: 调用工具（如「读取 src/main.rs」）
-        Tools-->>Shell: 返回结果
-        Shell-->>Pager: 流式返回 AI 回复（逐字）
-        Pager->>Render: 渲染回复（Markdown→终端）
-        Render-->>Pager: 返回带颜色的字符串
-        Pager-->>User: 显示在屏幕上
-    else 只是翻页/搜索
-        Pager-->>User: 直接处理本地操作
-    end
+    participant U as 你在终端里
+    participant P as xai-grok-pager (TUI)
+    participant S as xai-grok-shell (Agent)
+    participant T as xai-grok-tools (工具)
+    participant W as xai-grok-workspace (工作区)
+    participant M as AI 模型
+    
+    U->>P: 敲键盘输入问题/命令
+    P->>P: 输入解析 (input/mod.rs)
+    P->>P: 事件循环 (app/event_loop.rs)
+    P->>S: 发送请求到 Agent
+    S->>S: 主 Agent (acp_agent.rs)
+    S->>T: 调用工具（读文件/改代码/搜索）
+    T->>W: 访问文件系统 & 权限审批
+    W-->>T: 返回文件内容/执行结果
+    T-->>S: 返回工具结果
+    S->>M: 请求 AI 模型（带有工具结果）
+    M-->>S: 流式返回回答
+    S-->>P: 返回流式响应
+    P->>P: 渲染到终端 (agent_view, markdown 渲染)
+    P-->>U: 终端里刷新显示
 ```
 
-## 怎么启动它
+## 技术栈一览
 
-最直接的启动命令（在仓库根目录）：
+**语言**：全部用 Rust 写——e2024 版本（看 `Cargo.toml` 里的 `edition = "2024"`），追求性能和内存安全。
+
+**终端界面**：基于 `ratatui`（0.29 版本）和 `crossterm`（0.28 版本）构建全屏 TUI。
+
+**网络通信**：`reqwest` + `tokio` 做 HTTP，`tonic` 做 gRPC，`tokio-tungstenite` 做 WebSocket。
+
+**AI 模型交互**：走 OpenAI 兼容的 API（`async-openai` crate），支持流式输出。
+
+**渲染扩展**：`syntect`（代码高亮）、`pulldown-cmark`（Markdown 解析）、`mermaid-to-svg`（Mermaid 图表）。
+
+**可观测性**：`tracing` + `opentelemetry` + `prometheus`——日志、链路追踪、指标都全了。
+
+**协议**：`agent-client-protocol`（ACP）是核心通信协议，版本 0.10.4。同时支持 MCP（Model Context Protocol）让外部工具集成。
+
+## 怎么开始？
+
+### 安装预编译版本
 
 ```sh
-# 编译并打开 TUI 界面
-cargo run -p xai-grok-pager-bin
+# macOS / Linux / Git Bash
+curl -fsSL https://x.ai/cli/install.sh | bash
 
-# 或者只编译出 release 版
-cargo build -p xai-grok-pager-bin --release
-# 然后运行 target/release/xai-grok-pager
+# Windows PowerShell
+irm https://x.ai/cli/install.ps1 | iex
+
+grok --version
 ```
 
-> 第一次运行会弹出浏览器让你登录认证——具体流程见《快速上手：安装、运行、第一句对话》。
+### 从源码构建
 
-## 开发时要记住几件事
+```sh
+# 1. 确保 Rust 版本对上（rust-toolchain.toml 自动处理）
+# 2. 安装 DotSlash（用来处理 protoc 等工具）
+cargo install dotslash
 
-- **不要全量编译**。仓库里 crate 太多，`cargo check` 不加 `-p` 会慢死。永远指定你改的那个 crate，比如 `cargo check -p xai-grok-config`。
-- **根目录的 Cargo.toml 是自动生成的**，你改了也白改——它会被定期覆盖。要改依赖版本或配置，去每个 crate 自己的 `Cargo.toml` 里改。
-- **代码风格**有统一的 `rustfmt.toml` 和 `clippy.toml`，跑 `cargo fmt --all` 和 `cargo clippy -p <crate>` 检查就行。
+# 3. 启动 TUI
+cargo run -p xai-grok-pager-bin
 
-## 再挖深一点
+# 4. 构建发布版
+cargo build -p xai-grok-pager-bin --release
+```
 
-各个区域的详细拆解分别在：
+首次启动会打开浏览器让你登录认证——认证细节见《快速上手》页面。
 
-- **《整体架构：分层与数据流》**——更完整的分层关系和各层之间的调用协议。
-- **《用户按下一个键，背后发生了什么》**——从按键到显示的完整调用链，带逐行代码解释。
-- **《工具箱概览：AI 的「手和眼睛」》**——翻遍 xai-grok-tools 里的每一个工具。
-- **《工作区服务器：跟本地代码打交道的管家》**——xai-grok-workspace 的 RPC 服务、文件系统抽象和权限系统。
-- **《终端渲染引擎：如何把 Markdown 变成赏心悦目的 TUI》**——三阶段渲染流水线。
-- **《公共基础设施：熔断器、工具协议、压缩、追踪》**——crates/common 里的四个重要子系统。
+## 与其它页面的关系
+
+- 如果你想看**具体怎么安装、配置、首次聊天**，翻《快速上手》。
+- 想理解**从按回车到 AI 回复**的完整通路的，翻《核心流程：从用户输入到 AI 回复》。
+- 想深入**AI 怎么操作你的文件**的，翻《工具执行引擎》。
+- 想搞懂**Agent 怎么分拆任务、管理多个子 Agent**的，翻《Agent 生命周期与多 Agent 协同》。
+
+## 一句话总结
+
+Grok Build 就是一个用 Rust 写的、全栈开源的终端 AI 编程助手——它接管了"写代码-查代码-改代码-跑代码"的完整闭环，让你在命令行里跟 AI 聊着天就把事情干了。仓库按"终端 → Agent → 工具 → 工作区 → 公共库 → 第三方"分层组织，每个层有自己的 crate，耦合很松，可以单独开发测试。
