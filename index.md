@@ -2,7 +2,7 @@
 
 > SpaceXAI 出品的终端 AI 编程助手——像个懂代码的同事，在命令行里陪你写代码、查文件、跑命令。
 
-**📅 生成时间：2026/7/17 15:26:34** · 共 13 页 / 33 张图 · 基于 [github.com/xai-org/grok-build](https://github.com/xai-org/grok-build)
+**📅 生成时间：2026/7/17 15:26:34** · 共 14 页 / 33 张图 · 基于 [github.com/xai-org/grok-build](https://github.com/xai-org/grok-build)
 
 ## 📖 目录
 
@@ -15,12 +15,13 @@
 | 5 | [工具系统：AI 的"工具箱"](05-tool-system.md) | 模块 | Grok 能调用的所有工具（读写文件、执行命令、搜代码、抓网页……）是怎么注册、怎么路由、怎么执行的。 |
 | 6 | [工作区与文件系统](06-workspace-filesystem.md) | 模块 | Grok 怎么"看到"你的代码？——虚拟文件系统、权限引擎、git 集成、checkpoint，这一页全讲清。 |
 | 7 | [聊天状态与智能体生命周期](07-chat-state-and-agent.md) | 概念故事 | 用"小工人"的比喻讲透 ChatStateActor 和 Agent 是怎么管理对话、压缩记忆、处理命令的。 |
-| 8 | [采样引擎与遥测系统](08-sampler-and-telemetry.md) | 模块 | AI 的"大脑"怎么发起推理请求、处理流式响应、自动重试？遥测系统又怎么收集数据上报？ |
-| 9 | [Markdown 流式渲染](09-markdown-rendering.md) | 模块 | Grok 的聊天窗口里那些彩色的代码块、表格、链接、Mermaid 图是怎么一句一句画出来的。 |
-| 10 | [快速工作树与代码图](10-worktree-and-codebase-graph.md) | 模块 | Grok 怎么飞快地 clone 出工作树的副本？怎么把所有代码的关系整理成一张图供查询？ |
-| 11 | [钩子、MCP 协议与沙箱](11-hooks-mcp-and-sandbox.md) | 模块 | Grok 怎么允许你"拦截"事件、接入外部服务、安全隔离危险命令。 |
-| 12 | [Pager 终端 UI 与端到端测试](12-pager-and-e2e-testing.md) | 核心流程 | 跟着一次"用户按方向键"的完整路径走一遍：从终端输入→按键映射→事件循环→渲染→屏幕输出，看最终效果。 |
-| 13 | [通用基础设施：断路器、工具协议、压缩、记忆](13-common-infrastructure.md) | 模块 | 那些每个模块都在偷偷用的"螺丝刀"：断路器防止雪崩、工具协议负责通信、压缩省 token、记忆让 AI 记住你。 |
+| 8 | [Goal Mode 与 Plan Mode：AI 的长期目标和先想后做](14-goal-and-plan-mode.md) | 概念故事 | Grok 最有特色的两种工作模式：Goal Mode 围绕长期目标跨多轮自主推进（规划-执行-验证-总结），Plan Mode 先出方案再动手。用故事讲清完整生命周期。 |
+| 9 | [采样引擎与遥测系统](08-sampler-and-telemetry.md) | 模块 | AI 的"大脑"怎么发起推理请求、处理流式响应、自动重试？遥测系统又怎么收集数据上报？ |
+| 10 | [Markdown 流式渲染](09-markdown-rendering.md) | 模块 | Grok 的聊天窗口里那些彩色的代码块、表格、链接、Mermaid 图是怎么一句一句画出来的。 |
+| 11 | [快速工作树与代码图](10-worktree-and-codebase-graph.md) | 模块 | Grok 怎么飞快地 clone 出工作树的副本？怎么把所有代码的关系整理成一张图供查询？ |
+| 12 | [钩子、MCP 协议与沙箱](11-hooks-mcp-and-sandbox.md) | 模块 | Grok 怎么允许你"拦截"事件、接入外部服务、安全隔离危险命令。 |
+| 13 | [Pager 终端 UI 与端到端测试](12-pager-and-e2e-testing.md) | 核心流程 | 跟着一次"用户按方向键"的完整路径走一遍：从终端输入→按键映射→事件循环→渲染→屏幕输出，看最终效果。 |
+| 14 | [通用基础设施：断路器、工具协议、压缩、记忆](13-common-infrastructure.md) | 模块 | 那些每个模块都在偷偷用的"螺丝刀"：断路器防止雪崩、工具协议负责通信、压缩省 token、记忆让 AI 记住你。 |
 
 ## 🗂 仓库分区速览
 
