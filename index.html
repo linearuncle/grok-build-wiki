@@ -19,12 +19,16 @@
 			loadSidebar: true,
 			subMaxLevel: 2,
 			auto2top: true,
-			// 官方全文搜索插件：纯浏览器端建索引，无需后端
+			// 官方全文搜索插件：纯浏览器端建索引，无需后端。
+			// namespace 是 localStorage 索引缓存的命名空间——内容大改版后必须换新，
+			// 否则旧索引里的链接会指向已改名/删除的文件（404）。
 			search: {
 				paths: "auto",
 				placeholder: "搜索 Wiki 内容…",
 				noData: "没有找到相关内容",
 				depth: 4,
+				namespace: "grok-build-wiki-v3",
+				maxAge: 3600000,
 			},
 			plugins: [
 				function (hook) {
