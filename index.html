@@ -19,18 +19,21 @@
 			loadSidebar: true,
 			subMaxLevel: 2,
 			auto2top: true,
-			markdown: {
-				renderer: {
-					code(code, lang) {
-						if (lang === "mermaid") {
-							return `<div class="mermaid">${code}</div>`;
-						}
-						return this.origin.code(code, lang);
-					},
-				},
-			},
 			plugins: [
 				function (hook) {
+					// 在 marked 处理 markdown 之前，把 ```mermaid 代码块整体换成
+					// HTML 转义过的 <div class="mermaid">…</div>。
+					// 不这么做的话，图里的 < > & 等字符（如 Vec<u8>）会被
+					// marked/浏览器当成 HTML 标签吞掉，mermaid 拿到的就是残缺的文本。
+					hook.beforeEach(function (content) {
+						return content.replace(/```mermaid[^\S\n]*\n([\s\S]*?)```/g, function (_, code) {
+							var escaped = code
+								.replace(/&/g, "&amp;")
+								.replace(/</g, "&lt;")
+								.replace(/>/g, "&gt;");
+							return '<div class="mermaid">' + escaped + "</div>";
+						});
+					});
 					hook.doneEach(function () {
 						mermaid.run({ querySelector: ".mermaid" });
 					});
